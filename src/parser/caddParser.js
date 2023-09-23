@@ -22,17 +22,21 @@ var client;
         .version('0.1.0')
         .option('-p, --parser <CADD>', 'Annotation Source')
         .option('-i, --input_file <file1>', 'cadd Annotation file to be parsed and loaded')
-        .option('-r, --pid <pid>', 'pid to be added to the rows of mongo collection')
+        //.option('-r, --pid <pid>', 'pid to be added to the rows of mongo collection')
+        .option('-f, --file_id <file_id>', 'file id which has to be parsed and loaded')
+        .option('-t, --tmp_dir <tmp_dir>', 'Tmp directory for this request')
     argParser.parse(process.argv);
 
 
-    if ((!argParser.parser) || (!argParser.input_file) || (!argParser.pid) ) {
+    if ((!argParser.parser) || (!argParser.input_file) || (!argParser.file_id) ) {
         argParser.outputHelp(applyFont);
         process.exit(1);
     }
     
     var inputFile = argParser.input_file;
-    var loadID = argParser.pid;
+    //var loadID = argParser.pid;
+    var loadID = argParser.file_id;
+    var tmpDir = argParser.tmp_dir;
     ///////////////////// Winston Logger //////////////////////////////
     // To be added to a separate library //////
     const env = 'development';
@@ -49,9 +53,10 @@ var client;
     }
 */
 
-    var logFile = 'caddParse-'+process.pid+'.log';
+    //var logFile = 'caddParse-'+process.pid+'.log';
+    var logFile = 'caddParse.log';
     //const filename = path.join(logDir, 'results.log');
-    const filename = path.join(logDir, logFile);
+    const filename = path.join(tmpDir, logFile);
 
     const logger = createLogger({
         // change level if in dev environment versus production

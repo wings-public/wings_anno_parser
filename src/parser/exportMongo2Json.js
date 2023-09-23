@@ -22,17 +22,20 @@ var client;
     argParser
         .version('0.1.0')
         .option('-o, --output_file <file1>', 'cadd Annotation file to be parsed and loaded')
-        .option('-r, --pid <pid>', 'pid to be added to the rows of mongo collection')
+        .option('-f, --file_id <file_id>', 'file id which has to be parsed and loaded')
+        .option('-t, --tmp_dir <tmp_dir>', 'Tmp directory for this request')
     argParser.parse(process.argv);
 
 
-    if ( (!argParser.output_file) || (!argParser.pid) ) {
+    if ( (!argParser.output_file) || (!argParser.file_id) ) {
         argParser.outputHelp(applyFont);
         process.exit(1);
     }
     
     var outputFile = argParser.output_file;
-    var loadID = argParser.pid;
+    var loadID = argParser.file_id;
+    var tmpDir = argParser.tmp_dir;
+
     ///////////////////// Winston Logger //////////////////////////////
     // To be added to a separate library //////
     const env = 'development';
@@ -43,9 +46,9 @@ var client;
         fs.mkdirSync(logDir,{recursive :true});
     }
 
-    var logFile = 'exportData-'+process.pid+'.log';
+    var logFile = 'exportData.log';
     //const filename = path.join(logDir, 'results.log');
-    const filename = path.join(logDir, logFile);
+    const filename = path.join(tmpDir, logFile);
     console.log("filename is "+filename);
 
     const logger = createLogger({
@@ -79,12 +82,23 @@ var client;
         var annoCollection = db.collection(variantAnnoCollection);
         var val = await exportData(annoCollection,outputFile,loadID,logger);
         console.log("Sleep for 1 minute....");
+        logger.debug("Sleep for 1 minute....");
+
         await new Promise(resolve => setTimeout(resolve,10000));
+        
         console.log("Sleep completed");
+        logger.debug("Sleep completed");
+        
+        var r = await annoCollection.deleteMany({"loadID":loadID});
+        console.log(`Data stored in MongoDB for LoadID ${loadID} has been deleted after export`)
+        logger.debug(`Data stored in MongoDB for LoadID ${loadID} has been deleted after export`)
+
         if ( val == "Success" ) {
             console.log("Data exported to json FILE "+outputFile);
+            logger.debug("Data exported to json FILE "+outputFile);
             process.exit(0);
         }
+
     } catch(e) {
         console.log("Error is "+e);
         process.exit(0);
@@ -132,8 +146,8 @@ async function exportData(annoCollection,outputFile,loadID,logger) {
 
     // Commenting the delete operation to debug cadd score issue
     // Comment removed and delete included - 06/04/2022
-    var r = await annoCollection.deleteMany({"loadID":loadID});
-    console.log(`Data stored in MongoDB for LoadID ${loadID} has been deleted after export`);
+    /*var r = await annoCollection.deleteMany({"loadID":loadID});
+    console.log(`Data stored in MongoDB for LoadID ${loadID} has been deleted after export`);*/
     return "Success";
 }
 
